@@ -1,50 +1,96 @@
-# Agency Orchestrators for OpenCode
+# agency-orchestrators
 
-A collection of **8 orchestrators + 114 subagents** for [OpenCode](https://opencode.ai), organized by agency discipline.
+**122 OpenCode agents** — 8 orchestrators + 114 subagents — organized by agency discipline.
+
+Each orchestrator appears in the OpenCode TAB-switcher and delegates work to specialized subagents on demand. Activate `@engineering`, describe your task, and the orchestrator routes it to the right expert automatically.
+
+---
 
 ## Installation
 
+### Method 1 — Recommended (no cloning required)
+
 ```bash
-git clone https://github.com/your-org/agency-orchestrators.git
-cd agency-orchestrators
-./install.sh
+curl -fsSL https://raw.githubusercontent.com/YOUR_ORG/agency-orchestrators/main/install.sh | bash
 ```
 
-Installs all agents to `~/.config/opencode/agents/` (global — available in all projects).
+> **Note:** Replace `YOUR_ORG` with the actual GitHub org once the repo is public.
+
+### Method 2 — Clone and run locally
+
+```bash
+git clone https://github.com/YOUR_ORG/agency-orchestrators.git
+cd agency-orchestrators
+bash install.sh
+```
+
+### Method 3 — Manual
+
+Copy the agent files directly:
+
+```bash
+cp agents/*.md ~/.config/opencode/agents/
+```
+
+---
+
+## Interactive installer
+
+The installer is interactive — it lets you choose which orchestrators (and their subagents) to install. It auto-detects the best available UI:
+
+- **[fzf](https://github.com/junegunn/fzf)** — multi-select TUI (best experience)
+- **dialog / whiptail** — checkbox menu fallback
+- **Numeric menu** — plain terminal fallback (works everywhere)
+
+All agents install to `~/.config/opencode/agents/` (global — available in every project).
+
+---
 
 ## Orchestrators
 
-| Orchestrator | Subagents | Use for |
-|---|---|---|
-| `@engineering` | 22 | Frontend, backend, mobile, AI/ML, DevOps |
-| `@design` | 8 | UI, UX, brand, motion, design systems |
-| `@marketing` | 21 | Content, SEO, social, growth, paid media |
-| `@product` | 5 | Strategy, research, roadmap, prioritization |
-| `@pm` | 6 | Project planning, delivery, operations |
-| `@testing` | 8 | QA, performance, accessibility, e2e |
-| `@gamedev` | 20 | Unity, Unreal, Godot, Roblox, Blender |
-| `@specialized` | 24 | Compliance, identity, accessibility, MCP |
+| Orchestrator | Subagents | Specialty |
+|---|:---:|---|
+| `@engineering` | 22 | Frontend, backend, mobile, AI/ML, DevOps, architecture |
+| `@design` | 8 | UI/UX, brand identity, motion design, design systems |
+| `@marketing` | 21 | Content, SEO, social media, growth, paid media |
+| `@product` | 5 | Strategy, user research, roadmap, prioritization |
+| `@pm` | 6 | Project planning, delivery tracking, team operations |
+| `@testing` | 8 | QA, e2e, performance, accessibility, security testing |
+| `@gamedev` | 20 | Unity, Unreal, Godot, Roblox, Blender, game design |
+| `@specialized` | 24 | Compliance, identity systems, accessibility, MCP tooling |
 
-## Usage
+---
 
-In OpenCode, type `@engineering` (or any orchestrator name) to activate it. The orchestrator will analyze your request and delegate to the most specialized subagent.
+## How it works
 
-**Example:**
+OpenCode's TAB-switcher lets you switch between agents mid-conversation. Each orchestrator is a thin coordinator: it receives your request, selects the best subagent for the job, and delegates using `permission.task` — loading **only the relevant subagents** into context, not all 122 at once.
+
 ```
-@engineering build a React form with validation and error handling
+@engineering refactor this service to use the repository pattern
 ```
 
-The engineering orchestrator will delegate to `engineering-frontend-developer` automatically.
+The engineering orchestrator picks `engineering-backend-developer` and hands off. You stay in one conversation; the routing happens transparently.
 
-## How It Works
+---
 
-Each orchestrator uses `permission.task` to load **only its subagents** into the context window — keeping token usage low even with 122 agents installed.
+## Requirements
 
-## Known Limitations
+- [OpenCode](https://opencode.ai) installed and configured
+- `bash` — macOS, Linux, or Git Bash on Windows
+- `fzf` — optional, recommended for the best installer experience
 
-- **MCP permissions**: Due to [OpenCode Issue #16491](https://github.com/sst/opencode/issues/16491), MCP tool permissions are not inherited by subagents. Workaround: add explicit `permission.mcp` blocks to individual subagents if needed.
-- **Global install only**: Agents install to `~/.config/opencode/agents/`. For project-specific install, copy manually to `.opencode/agents/`.
+---
 
-## Source
+## Uninstall
 
-Generated from [agency-agents](https://github.com/your-org/agency-agents) — a collection of 144+ specialized agent system prompts for AI coding tools.
+```bash
+rm ~/.config/opencode/agents/{engineering,design,marketing,product,pm,testing,gamedev,specialized}.md
+rm ~/.config/opencode/agents/{engineering,design,marketing,product,pm,testing,gamedev,specialized}-*.md
+```
+
+---
+
+## Known limitations
+
+- **MCP tool permissions** — due to [OpenCode Issue #16491](https://github.com/sst/opencode/issues/16491), MCP permissions are not inherited by subagents. Workaround: add explicit `permission.mcp` blocks to individual subagent files.
+- **Global install only** — agents install to `~/.config/opencode/agents/`. For project-scoped installs, copy manually to `.opencode/agents/` in your project root.
