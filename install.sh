@@ -142,43 +142,66 @@ select_checklist() {
 }
 
 select_bash() {
-  echo ""
-  echo "╔════════════════════════════════════════════════╗"
-  echo "║       Agency Orchestrators — Installer         ║"
-  echo "╠════════════════════════════════════════════════╣"
-  printf "║  %-3s  %-14s  %s\n" "0" "ALL" "All orchestrators"
-  for i in "${!KEYS[@]}"; do
-    printf "║  %-3s  %-14s  (%s agents)\n" "$((i+1))" "${NAMES[$i]}" "${COUNTS[$i]}"
-  done
-  echo "╚════════════════════════════════════════════════╝"
-  echo ""
-  echo "Enter numbers separated by spaces (e.g.: 1 3 5), or 0 for all:"
-  echo -n "> "
-  read -r raw_input
+  # Menu output goes to /dev/tty so it is NOT captured by $() in main
+  {
+    echo ""
+    echo "╔════════════════════════════════════════════════╗"
+    echo "║       Agency Orchestrators — Installer         ║"
+    echo "╠════════════════════════════════════════════════╣"
+    printf "║  %-3s  %-14s  %s\n" "0" "ALL" "All orchestrators"
+    for i in "${!KEYS[@]}"; do
+      printf "║  %-3s  %-14s  (%s agents)\n" "$((i+1))" "${NAMES[$i]}" "${COUNTS[$i]}"
+    done
+    echo "╚════════════════════════════════════════════════╝"
+    echo ""
+    echo "Enter numbers separated by spaces (e.g.: 1 3 5), or 0 for all:"
+    echo -n "> "
+  } >/dev/tty
+
+  read -r raw_input </dev/tty
 
   if [[ -z "$raw_input" ]]; then
-    echo ""
     return
   fi
 
   local indices=()
+  local all_selected=0
   for token in $raw_input; do
     if [[ "$token" == "0" ]]; then
-      seq 0 $(( ${#KEYS[@]} - 1 )) | tr '\n' ' '
-      return
+      all_selected=1
+      break
     elif [[ "$token" =~ ^[1-9][0-9]*$ ]]; then
       local idx=$(( token - 1 ))
       if (( idx >= 0 && idx < ${#KEYS[@]} )); then
         indices+=("$idx")
       else
-        echo "  Warning: '$token' is out of range, skipping." >&2
+        echo "  Warning: '$token' is out of range, skipping." >/dev/tty
       fi
     else
-      echo "  Warning: '$token' is not a valid number, skipping." >&2
+      echo "  Warning: '$token' is not a valid number, skipping." >/dev/tty
     fi
   done
 
-  echo "${indices[*]}"
+  if (( all_selected )); then
+    seq 0 $(( ${#KEYS[@]} - 1 )) | tr '\n' ' '
+    return
+  fi
+
+  # Deduplicate indices before returning
+  local seen=()
+  local unique=()
+  for idx in "${indices[@]}"; do
+    local dup=0
+    for s in "${seen[@]}"; do
+      [[ "$s" == "$idx" ]] && dup=1 && break
+    done
+    if (( !dup )); then
+      seen+=("$idx")
+      unique+=("$idx")
+    fi
+  done
+
+  echo "${unique[*]}"
 }
 
 # ── Install selected orchestrators ────────────────────────────────────────────
@@ -271,8 +294,22 @@ main() {
     exit 0
   fi
 
-  # shellcheck disable=SC2086
-  install_selection $raw_selection
+  # Deduplicate indices (defensive — select_bash already deduplicates,
+  # but fzf/dialog could theoretically return repeated values)
+  local deduped=()
+  local seen_main=()
+  for idx in $raw_selection; do
+    local dup=0
+    for s in "${seen_main[@]}"; do
+      [[ "$s" == "$idx" ]] && dup=1 && break
+    done
+    if (( !dup )); then
+      seen_main+=("$idx")
+      deduped+=("$idx")
+    fi
+  done
+
+  install_selection "${deduped[@]}"
 }
 
 main "$@"
