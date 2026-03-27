@@ -11,15 +11,13 @@ Each orchestrator appears in the OpenCode TAB-switcher and delegates work to spe
 ### Method 1 — Recommended (no cloning required)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/YOUR_ORG/agency-orchestrators/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/ArielPenna/agency-orchestrators/main/install.sh | bash
 ```
-
-> **Note:** Replace `YOUR_ORG` with the actual GitHub org once the repo is public.
 
 ### Method 2 — Clone and run locally
 
 ```bash
-git clone https://github.com/YOUR_ORG/agency-orchestrators.git
+git clone https://github.com/ArielPenna/agency-orchestrators.git
 cd agency-orchestrators
 bash install.sh
 ```
